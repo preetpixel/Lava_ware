@@ -18,7 +18,6 @@ if game.PlaceId == 5130598377 then
     local QuestTab = Window:CreateTab("Quest", 4483362458)
     local PlayerTab = Window:CreateTab("Player", 4483362458)
 
-    -- ReplicatedStorage shortcuts
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local CombatRemote = ReplicatedStorage:WaitForChild("Combat")
     local spawnBossRemote = ReplicatedStorage:FindFirstChild("SpawnBoss")
@@ -29,7 +28,6 @@ if game.PlaceId == 5130598377 then
 
     local player = game.Players.LocalPlayer
 
-    -- NPC & Boss lists
     local npcList = {}
     local bossList = {}
 
@@ -55,7 +53,6 @@ if game.PlaceId == 5130598377 then
     npcList = unique(npcList)
     bossList = unique(bossList)
 
-    -- Selected variables
     local selectedNPC = npcList[1]
     local selectedBoss = bossList[1]
     local selectedQuest = nil
@@ -63,17 +60,14 @@ if game.PlaceId == 5130598377 then
     local selectedSellException = nil
     local selectedTeleport = nil
 
-    -- Teleport locations (islands only)
     local islandPositions = {
         ["Middle Island"] = Vector3.new(20, 10, 20),
         ["West Island"] = Vector3.new(-300, 15, 100),
         ["East Island"] = Vector3.new(350, 20, -50),
         ["South Island"] = Vector3.new(0, 5, -400),
         ["North Island"] = Vector3.new(0, 30, 400),
-        -- Add more known island positions here
     }
 
-    -- Quests list (example subset, expand as needed)
     local allQuests = {
         "Standless Questline",
         "Umbra Questline",
@@ -131,10 +125,8 @@ if game.PlaceId == 5130598377 then
         "Power of the Saints Corpse Questline",
         "Master of Swords Questline",
         "Remnants of The Mercenaries Questline",
-        -- add all other quests as needed
     }
 
-    -- Items list (example, expand with full list)
     local allItems = {
         "Sukuna Finger",
         "Mythical Sword",
@@ -142,18 +134,13 @@ if game.PlaceId == 5130598377 then
         "Healing Potion",
         "Rare Mount",
         "Skill Crystal",
-        -- add all known items here
     }
 
-    -- Teleport function
     local function teleportTo(pos)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         player.Character.HumanoidRootPart.CFrame = CFrame.new(pos) + Vector3.new(0, 3, 0)
     end
 
-    -- UI Elements
-
-    -- NPC Dropdown
     FarmTab:CreateDropdown({
         Name = "Select NPC to Farm",
         Options = npcList,
@@ -163,7 +150,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Boss Dropdown
     FarmTab:CreateDropdown({
         Name = "Select Boss to Farm",
         Options = bossList,
@@ -173,7 +159,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Quest Dropdown
     QuestTab:CreateDropdown({
         Name = "Select Quest",
         Options = allQuests,
@@ -183,7 +168,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Storage item dropdown
     StorageTab:CreateDropdown({
         Name = "Select Item to Store Automatically",
         Options = allItems,
@@ -193,7 +177,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Auto Sell exception dropdown (items not to sell)
     SellTab:CreateDropdown({
         Name = "Select Item NOT to Sell",
         Options = allItems,
@@ -203,7 +186,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Teleport dropdown (islands only)
     TeleportTab:CreateDropdown({
         Name = "Select Island to Teleport",
         Options = (function()
@@ -222,9 +204,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Toggles
-
-    -- One-Shot Damage toggle (separate)
     FarmTab:CreateToggle({
         Name = "One-Shot Damage",
         CurrentValue = false,
@@ -233,7 +212,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Auto Farm NPC toggle
     FarmTab:CreateToggle({
         Name = "Auto Farm NPC (with Teleport)",
         CurrentValue = false,
@@ -264,7 +242,6 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Auto Farm Boss toggle
     FarmTab:CreateToggle({
         Name = "Auto Farm Boss (with Teleport)",
         CurrentValue = false,
@@ -282,11 +259,7 @@ if game.PlaceId == 5130598377 then
                         end
                         if bossObj and bossObj:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                             player.Character.HumanoidRootPart.CFrame = bossObj.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-                            if _G.OneShotNPC then
-                                CombatRemote:FireServer("Damage", bossObj, math.huge)
-                            else
-                                CombatRemote:FireServer("Damage", bossObj)
-                            end
+                            CombatRemote:FireServer("Damage", bossObj)
                         end
                         wait(0.3)
                     end
@@ -295,151 +268,130 @@ if game.PlaceId == 5130598377 then
         end,
     })
 
-    -- Auto Sell toggle
+    FarmTab:CreateToggle({
+        Name = "Auto Farm Boundless Tower",
+        CurrentValue = false,
+        Callback = function(state)
+            _G.FarmingBoundless = state
+            if state then
+                spawn(function()
+                    while _G.FarmingBoundless do
+                        -- Assuming Boundless Tower NPC is named "Boundless Tower"
+                        local boundlessNPC = nil
+                        for _, npc in pairs(workspace.Live:GetChildren()) do
+                            if npc.Name == "Boundless Tower" then
+                                boundlessNPC = npc
+                                break
+                            end
+                        end
+                        if boundlessNPC and boundlessNPC:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            player.Character.HumanoidRootPart.CFrame = boundlessNPC.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                            CombatRemote:FireServer("Damage", boundlessNPC)
+                        end
+                        wait(0.3)
+                    end
+                end)
+            end
+        end,
+    })
+
+    QuestTab:CreateButton({
+        Name = "Take Quest",
+        Callback = function()
+            if selectedQuest and takeQuestRemote then
+                takeQuestRemote:FireServer(selectedQuest)
+            end
+        end,
+    })
+
+    QuestTab:CreateButton({
+        Name = "Complete Quest",
+        Callback = function()
+            if selectedQuest and completeQuestRemote then
+                completeQuestRemote:FireServer(selectedQuest)
+            end
+        end,
+    })
+
+    StorageTab:CreateButton({
+        Name = "Store Item",
+        Callback = function()
+            if selectedStorageItem and storeItemRemote then
+                storeItemRemote:FireServer(selectedStorageItem)
+            end
+        end,
+    })
+
     SellTab:CreateToggle({
         Name = "Auto Sell",
         CurrentValue = false,
         Callback = function(state)
             _G.AutoSell = state
-            if state then
-                spawn(function()
-                    while _G.AutoSell do
-                        if player and player.Backpack then
-                            for _, item in pairs(player.Backpack:GetChildren()) do
-                                if item:IsA("Tool") and item.Name ~= selectedSellException then
-                                    sellItemRemote:FireServer(item.Name)
-                                end
+            spawn(function()
+                while _G.AutoSell do
+                    local backpack = player.Backpack
+                    for _, item in pairs(backpack:GetChildren()) do
+                        if item:IsA("Tool") and item.Name ~= selectedSellException then
+                            if sellItemRemote then
+                                sellItemRemote:FireServer(item.Name)
                             end
                         end
-                        wait(1)
                     end
-                end)
-            end
+                    wait(1)
+                end
+            end)
         end,
     })
 
-    -- Store Item toggle
-    StorageTab:CreateToggle({
-        Name = "Auto Store Item",
+    -- God Mode Toggle
+    local humanoid = nil
+    local godModeEnabled = false
+
+    local function enableGodMode()
+        if humanoid then
+            humanoid.MaxHealth = math.huge
+            humanoid.Health = humanoid.MaxHealth
+            humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                if godModeEnabled and humanoid.Health < humanoid.MaxHealth then
+                    humanoid.Health = humanoid.MaxHealth
+                end
+            end)
+        end
+    end
+
+    local function disableGodMode()
+        if humanoid then
+            humanoid.MaxHealth = 100
+            humanoid.Health = 100
+        end
+    end
+
+    local function setupHumanoid()
+        local char = player.Character or player.CharacterAdded:Wait()
+        humanoid = char:WaitForChild("Humanoid")
+        if godModeEnabled then
+            enableGodMode()
+        end
+    end
+
+    player.CharacterAdded:Connect(function()
+        wait(1)
+        setupHumanoid()
+    end)
+
+    setupHumanoid()
+
+    PlayerTab:CreateToggle({
+        Name = "God Mode",
         CurrentValue = false,
         Callback = function(state)
-            _G.AutoStore = state
+            godModeEnabled = state
             if state then
-                spawn(function()
-                    while _G.AutoStore do
-                        if player and player.Backpack then
-                            for _, item in pairs(player.Backpack:GetChildren()) do
-                                if item:IsA("Tool") and item.Name == selectedStorageItem then
-                                    storeItemRemote:FireServer(item.Name)
-                                end
-                            end
-                        end
-                        wait(1)
-                    end
-                end)
+                enableGodMode()
+            else
+                disableGodMode()
             end
         end,
     })
-
-    -- Quest toggle (Auto Take and Complete)
-    QuestTab:CreateToggle({
-        Name = "Auto Complete Quest",
-        CurrentValue = false,
-        Callback = function(state)
-            _G.AutoQuest = state
-            if state and selectedQuest then
-                spawn(function()
-                    while _G.AutoQuest do
-                        takeQuestRemote:FireServer(selectedQuest)
-                        completeQuestRemote:FireServer(selectedQuest)
-                        wait(5)
-                    end
-                end)
-            end
-        end,
-    })
-
-    -- Player Tab: Auto Speed Toggle + Slider
-
-    local autoSpeedEnabled = false
-    local autoSpeedValue = 16
-
-    PlayerTab:CreateToggle({
-        Name = "Auto Speed",
-        CurrentValue = false,
-        Callback = function(state)
-            autoSpeedEnabled = state
-            if not state then
-                if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-                    player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16 -- Reset default
-                end
-            end
-        end,
-    })
-
-    PlayerTab:CreateSlider({
-        Name = "WalkSpeed",
-        Min = 16,
-        Max = 250,
-        Default = 16,
-        Color = Color3.fromRGB(0, 170, 255),
-        Increment = 1,
-        ValueName = "Speed",
-        Callback = function(value)
-            autoSpeedValue = value
-        end,
-    })
-
-    -- Infinite Jump toggle
-    local infJumpEnabled = false
-
-    PlayerTab:CreateToggle({
-        Name = "Infinite Jump",
-        CurrentValue = false,
-        Callback = function(state)
-            infJumpEnabled = state
-        end,
-    })
-
-    -- Godmode toggle (makes player invincible by setting Humanoid.Health to max and disabling damage)
-    local godmodeEnabled = false
-
-    PlayerTab:CreateToggle({
-        Name = "Godmode",
-        CurrentValue = false,
-        Callback = function(state)
-            godmodeEnabled = state
-        end,
-    })
-
-    -- Connect infinite jump
-    game:GetService("UserInputService").JumpRequest:Connect(function()
-        if infJumpEnabled and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end)
-
-    -- Main loop to handle auto speed and godmode
-    spawn(function()
-        while true do
-            wait(0.1)
-            if player.Character then
-                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    -- Auto Speed
-                    if autoSpeedEnabled then
-                        humanoid.WalkSpeed = autoSpeedValue
-                    else
-                        humanoid.WalkSpeed = 16
-                    end
-
-                    -- Godmode: constantly reset health to max and prevent damage
-                    if godmodeEnabled then
-                        humanoid.Health = humanoid.MaxHealth
-                    end
-                end
-            end
-        end
-    end)
 
 end
